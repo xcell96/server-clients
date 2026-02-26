@@ -3,11 +3,11 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 
-const char HOST[] = "0.0.0.0";
+const char HOST[] = "127.0.0.1";
 const short PORT_LISTEN = 4040;
 const size_t BUFSIZE = 128;
 
-int main(int argc, char* argv[]){
+int main(){
 
     struct sockaddr_in addr = {0};
     addr.sin_family = AF_INET;
@@ -39,6 +39,7 @@ int main(int argc, char* argv[]){
         while((n = read(clientfd, buffer, BUFSIZE - 1)) > 0){
             buffer[n] = '\0';
             printf("Received: %s", buffer);
+            fflush(stdout);
         }
 
         close(clientfd);
