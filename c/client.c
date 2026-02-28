@@ -5,19 +5,13 @@
 #include <stdio.h>
 #include <string.h>
 
-const char HOST[] = "127.0.0.1";
-const short PORT = 4040;
-const size_t BUFSIZE = 128;
+#include "constants.h"
+#include "netutils.h"
 
 int main(){
     
     struct sockaddr_in addr = {0};
-    addr.sin_family = AF_INET;
-    addr.sin_port = htons(PORT);
-    if(inet_pton(AF_INET, HOST, &addr.sin_addr) != 1){
-        perror("inet_pton failed");
-        return 1;
-    }
+    if(init_addr(&addr)) { return 1; }
 
     int sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if(sockfd == -1) return 1;
