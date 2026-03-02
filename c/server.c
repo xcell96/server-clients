@@ -8,17 +8,30 @@
 
 int main(){
 
-    struct sockaddr_in addr = {0};
-    if(init_addr(&addr)) { return 1; }
-    
-    int sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if(sockfd == -1) { return 1; }
+    struct socketinfo sock = init_socket();
+    if(sock.sockfd == -1) { return 1; }
 
     int opt = 1;
-    setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+    setsockopt(sock.sockfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
 
-    if(bind(sockfd, (struct sockaddr*)&addr, sizeof(addr)) == -1) { return 1; }
-    if(listen(sockfd, SOMAXCONN) == -1) { return 1; }
+    int res =
+        bind(
+            sock.sockfd,
+            (struct sockaddr*)&sock.sock_addr,
+            sizeof(sock.sock_addr)
+        );
+
+    if(res == -1) {
+        close(sock.sockfd);
+        perror("binding socket failed");
+        return 1;
+    }
+
+    if(listen(sock.sockfd, SOMAXCONN) == -1) {
+        close(sock.sockfd);
+        perror("listen failed");
+        return 1;
+    }
 
     char buffer[BUFSIZE];
     ssize_t n;
@@ -27,8 +40,15 @@ int main(){
         struct sockaddr_in client_addr = {0};
         socklen_t client_len = sizeof(client_addr);
 
-        int clientfd = accept(sockfd, (struct sockaddr*)&client_addr, &client_len);
+        int clientfd =
+            accept(
+                sock.sockfd,
+                (struct sockaddr*)&client_addr,
+                &client_len
+            );
         if(clientfd == -1) { continue; }
+
+        printf("Connection opened.\n");
 
         while((n = read(clientfd, buffer, BUFSIZE - 1)) > 0){
             buffer[n] = '\0';
@@ -37,8 +57,9 @@ int main(){
         }
 
         close(clientfd);
+        printf("Connection closed.\n");
     }
 
-    close(sockfd);
-
+    close(sock.sockfd);
+    printf("Bye.\n");
 }

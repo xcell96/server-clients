@@ -2,5 +2,13 @@
 #include <sys/types.h>
 #include <arpa/inet.h>
 
-ssize_t
+struct socketinfo {
+    int sockfd;
+    struct sockaddr_in sock_addr;
+};
+
+int
 init_addr(struct sockaddr_in* addr);
+
+struct socketinfo
+init_socket();

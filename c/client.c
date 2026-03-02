@@ -10,16 +10,19 @@
 
 int main(){
     
-    struct sockaddr_in addr = {0};
-    if(init_addr(&addr)) { return 1; }
+    struct socketinfo sock = init_socket();
+    if(sock.sockfd == -1) { return 1; }
 
-    int sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if(sockfd == -1) return 1;
+    int res =
+        connect(
+            sock.sockfd,
+            (struct sockaddr*)&sock.sock_addr,
+            sizeof(sock.sock_addr)
+        );
 
-    int conn_result = connect(sockfd, (struct sockaddr*)&addr, sizeof(addr));
-    if(conn_result == -1) {
+    if(res == -1) {
         perror("connect failed");
-        close(sockfd);
+        close(sock.sockfd);
         return 1;
     }
 
@@ -31,8 +34,9 @@ int main(){
         printf("Message: ");
         fgets(msg, BUFSIZE, stdin);
         if(!strcmp(msg, "QUIT\n")) break;
-        send(sockfd, msg, strlen(msg), 0);
+        send(sock.sockfd, msg, strlen(msg), 0);
     }
 
-    close(sockfd);
+    close(sock.sockfd);
+    printf("Bye.\n");
 }
