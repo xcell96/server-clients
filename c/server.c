@@ -2,33 +2,36 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include <stdlib.h>
 
 #include "constants.h"
 #include "netutils.h"
 
 int main(){
 
-    struct socketinfo sock = init_socket();
-    if(sock.sockfd == -1) { return 1; }
+    struct socketinfo* sock = init_socket();
+    if(sock == NULL) { return 1; }
 
     int opt = 1;
-    setsockopt(sock.sockfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+    setsockopt(sock->sockfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
 
     int res =
         bind(
-            sock.sockfd,
-            (struct sockaddr*)&sock.sock_addr,
-            sizeof(sock.sock_addr)
+            sock->sockfd,
+            (struct sockaddr*)&sock->sock_addr,
+            sizeof(sock->sock_addr)
         );
 
     if(res == -1) {
-        close(sock.sockfd);
+        close(sock->sockfd);
+        free(sock);
         perror("binding socket failed");
         return 1;
     }
 
-    if(listen(sock.sockfd, SOMAXCONN) == -1) {
-        close(sock.sockfd);
+    if(listen(sock->sockfd, SOMAXCONN) == -1) {
+        close(sock->sockfd);
+        free(sock);
         perror("listen failed");
         return 1;
     }
@@ -42,7 +45,7 @@ int main(){
 
         int clientfd =
             accept(
-                sock.sockfd,
+                sock->sockfd,
                 (struct sockaddr*)&client_addr,
                 &client_len
             );
@@ -60,6 +63,8 @@ int main(){
         printf("Connection closed.\n");
     }
 
-    close(sock.sockfd);
+    close(sock->sockfd);
+    free(sock);
+
     printf("Bye.\n");
 }

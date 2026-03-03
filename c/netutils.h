@@ -1,5 +1,4 @@
 #pragma once
-#include <sys/types.h>
 #include <arpa/inet.h>
 
 struct socketinfo {
@@ -10,5 +9,5 @@ struct socketinfo {
 int
 init_addr(struct sockaddr_in* addr);
 
-struct socketinfo
+struct socketinfo*
 init_socket();

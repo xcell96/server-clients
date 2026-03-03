@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "netutils.h"
 #include "constants.h"
@@ -16,14 +17,22 @@ init_addr(struct sockaddr_in* addr){
     return 0;
 }
 
-struct socketinfo
+struct socketinfo*
 init_socket() {
-    struct socketinfo s = {0};
-    s.sockfd = -1;
+    struct socketinfo* s =
+        (struct socketinfo*)malloc(sizeof(struct socketinfo));
 
-    if(init_addr(&s.sock_addr)) { return s; }
-    s.sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if(s.sockfd == -1) { perror("socket creation failed"); }
+    if(init_addr(&s->sock_addr)) {
+        free(s);
+        return NULL;
+    }
+
+    s->sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    if(s->sockfd == -1) {
+        perror("socket creation failed");
+        free(s);
+        return NULL;
+    }
 
     return s;
 }
