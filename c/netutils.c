@@ -22,6 +22,8 @@ init_socket() {
     struct socketinfo* s =
         (struct socketinfo*)malloc(sizeof(struct socketinfo));
 
+    if(s == NULL) return NULL;
+
     if(init_addr(&s->sock_addr)) {
         free(s);
         return NULL;
