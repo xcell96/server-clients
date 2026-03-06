@@ -19,7 +19,7 @@ int main(){
     uint16_t port = read_port();
 
     // initialize the socket
-    struct socketinfo* sock = init_socket(&port);
+    struct socketinfo* sock = init_socket(NULL, &port);
     if(sock == NULL) { return 1; }
 
     int opt = 1;

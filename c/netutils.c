@@ -7,14 +7,16 @@
 #include "constants.h"
 
 int
-init_addr(struct sockaddr_in* addr, uint16_t* port_listen){
-    if(addr == NULL) return 1;
+init_addr(struct sockaddr_in* addr, char* ip, uint16_t* port_listen){
+    if(addr == NULL || port_listen == NULL) return 1;
+
+    const char* host = (ip == NULL) ? HOST : ip;
 
     addr->sin_family = AF_INET;
     addr->sin_port =
         port_listen == NULL ? htons(PORT_LISTEN) : htons(*port_listen);
 
-    if(inet_pton(AF_INET, HOST, &addr->sin_addr) <= 0){
+    if(inet_pton(AF_INET, host, &addr->sin_addr) <= 0){
         perror("inet_pton failed");
         return 1;
     }
@@ -23,13 +25,13 @@ init_addr(struct sockaddr_in* addr, uint16_t* port_listen){
 }
 
 struct socketinfo*
-init_socket(uint16_t* port_listen) {
+init_socket(char* ip, uint16_t* port_listen) {
     struct socketinfo* s =
         (struct socketinfo*)malloc(sizeof(struct socketinfo));
 
     if(s == NULL) return NULL;
 
-    if(init_addr(&s->sock_addr, port_listen)) {
+    if(init_addr(&s->sock_addr, ip, port_listen)) {
         free(s);
         return NULL;
     }

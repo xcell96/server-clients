@@ -19,10 +19,10 @@ struct client_context {
 };
 
 int
-init_addr(struct sockaddr_in* addr, uint16_t* port_listen);
+init_addr(struct sockaddr_in* addr, char* ip, uint16_t* port_listen);
 
 struct socketinfo*
-init_socket(uint16_t* port_listen);
+init_socket(char* ip, uint16_t* port_listen);
 
 uint16_t
 read_port();
