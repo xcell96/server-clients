@@ -15,11 +15,16 @@ void* handle_client(void* arg);
 
 int main(){
 
+    char ip[INET_ADDRSTRLEN];
+    printf("Bind IP (check network topology first): ");
+    fgets(ip, sizeof(ip), stdin);
+    ip[strcspn(ip, "\n")] = '\0';
+
     // get listen port from user
     uint16_t port = read_port();
 
     // initialize the socket
-    struct socketinfo* sock = init_socket(NULL, &port);
+    struct socketinfo* sock = init_socket(ip, &port);
     if(sock == NULL) { return 1; }
 
     int opt = 1;
