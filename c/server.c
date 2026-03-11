@@ -11,9 +11,19 @@
 #include "constants.h"
 #include "netutils.h"
 
+#define MAX_CLIENTS 8
+
+int clients[MAX_CLIENTS];
+size_t client_counter = 1;
+
+pthread_mutex_t clients_mutex = PTHREAD_MUTEX_INITIALIZER;
+
 void* handle_client(void* arg);
+void broadcast(const char* msg, size_t len);
 
 int main(){
+
+    memset(clients, -1, sizeof(int) * MAX_CLIENTS);
 
     char ip[INET_ADDRSTRLEN];
     printf("Bind IP (check network topology first): ");
@@ -93,6 +103,15 @@ int main(){
         ctx->client = client;
         ctx->server_ip = sock->ip;
         ctx->server_port = port;
+        ctx->client_no = client_counter++;
+
+        pthread_mutex_lock(&clients_mutex);
+
+        if(client_counter < MAX_CLIENTS) {
+            clients[client_counter] = client->sockfd;
+        }
+
+        pthread_mutex_unlock(&clients_mutex);
 
         // making a separate thread for handling the connection
         pthread_t t;
@@ -111,18 +130,17 @@ void* handle_client(void* arg) {
     struct socketinfo* client = ctx->client;
     char* server_ip = ctx->server_ip;
     uint16_t server_port = ctx->server_port;
+    size_t client_no = ctx->client_no;
     free(arg);
 
     char buffer[BUFSIZE];
-    char msg[16];
-    int flag;
+    char msg[BUFSIZE];
     ssize_t n;
 
-    printf("Connection opened from %s:%d\n", client->ip, client->port);
+    printf("Connection %lu opened from %s:%d\n", client_no, client->ip, client->port);
 
     while((n = read(client->sockfd, buffer, BUFSIZE - 1)) > 0){
         buffer[n] = '\0';
-        flag = 0;
 
         printf("[%s:%d -> %s:%d] Received: %s\n",
                 client->ip,
@@ -134,35 +152,58 @@ void* handle_client(void* arg) {
 
         if(strcmp(buffer, "sheep") == 0) {
             strcpy(msg, "baa");
-            flag = 1;
         }else if(strcmp(buffer, "dog") == 0) {
             strcpy(msg, "woof");
-            flag = 1;
         }else if(strcmp(buffer, "cow") == 0) {
             strcpy(msg, "moo");
-            flag = 1;
         }else if(strcmp(buffer, "pig") == 0) {
             strcpy(msg, "oink");
-            flag = 1;
+        }else{
+            strcpy(msg, buffer);
         }
 
-        if(flag) {
-            send(client->sockfd, msg, strlen(msg)+1, 0);
-            printf("[%s:%d -> %s:%d] Sent: %s\n",
-                    server_ip,
-                    server_port,
-                    client->ip,
-                    client->port,
-                    msg
-            );
-        }
+        snprintf(buffer, sizeof(buffer), "[%s:%d -> %s:%d] Client %lu: %s\n",
+                server_ip,
+                server_port,
+                client->ip,
+                client->port,
+                client_no,
+                msg);
+
+        broadcast(buffer, strlen(buffer)+1);
+        printf("%s", buffer);
         
         fflush(stdout);
     }
 
+    pthread_mutex_lock(&clients_mutex);
+
+    for(size_t i = 0; i < client_counter; i++){
+        if(clients[i] == client->sockfd){
+            clients[i] = -1;
+            client_counter--;
+            break;
+        }
+    }
+
+    pthread_mutex_unlock(&clients_mutex);
+
     close(client->sockfd);
     printf("Connection to %s:%d closed.\n", client->ip, client->port);
+    snprintf(buffer, sizeof(buffer), "Client %lu left.\n", client_no);
+    broadcast(buffer, strlen(buffer)+1);
 
     free(client);
     return NULL;
+}
+
+void broadcast(const char* msg, size_t len) {
+    pthread_mutex_lock(&clients_mutex);
+
+    for(size_t i = 0; i <= client_counter; i++) {
+        if(clients[i] != -1)
+            send(clients[i], msg, len, 0);
+    }
+
+    pthread_mutex_unlock(&clients_mutex);
 }

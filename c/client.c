@@ -113,12 +113,13 @@ void* recv_thread(void* arg){
         rl_replace_line("", 0);
         rl_redisplay();
 
-        printf("[%s:%d -> %s:%d] Server: %s\n",
+        /*printf("[%s:%d -> %s:%d] Server: %s\n",
                 server->ip,
                 server->port,
                 ctx->server_ip,
                 ctx->server_port,
-                buffer);
+                buffer);*/
+        printf("%s", buffer);
 
         rl_restore_prompt();
         rl_redisplay();
@@ -147,7 +148,7 @@ void* send_thread(void* arg){
             break;
         }
 
-        send(sockfd, msg, strlen(msg), 0);
+        send(sockfd, msg, strlen(msg)+1, 0);
         free(msg);
     }
     printf("Bye.\n");

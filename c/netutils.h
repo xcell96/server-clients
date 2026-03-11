@@ -16,6 +16,7 @@ struct client_context {
     struct socketinfo* client;
     char* server_ip;
     uint16_t server_port;
+    size_t client_no;
 };
 
 int
